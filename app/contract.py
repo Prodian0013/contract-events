@@ -39,11 +39,8 @@ class ContractConnector:
         transferEvents = self.contract.events.Transfer().createFilter(fromBlock=start_from_block, toBlock=end_at_block, argument_filters={})
         transfers = transferEvents.get_all_entries()
         all_events = []
-        with open('data.json', 'a') as fp:
-            for t in transfers:
-                a = Web3.toJSON(t)
-                all_events.append(a)
-                print(a, file=fp)
+        for t in transfers:
+            all_events.append(json.loads(Web3.toJSON(t)))
         self.logger.debug(
             'Found %i transfers of token from contract at address %s from block %s to %s'
             % (len(all_events), self.contract_address, start_from_block, end_at_block))

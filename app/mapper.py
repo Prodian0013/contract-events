@@ -2,6 +2,7 @@ from requests import ReadTimeout
 
 from .contract import ContractConnector
 from .utils import generate_block_ranges
+import json
 
 class Token(object):
     def __init__(self, token_name, token_symbol, token_total_supply, token_decimals):
@@ -16,9 +17,9 @@ class Mapper:
         self.max_number_of_retries = max_number_of_retries
         self.partition_size = partition_size
         self.watch_contract = False
-        
+
         self.contract = ContractConnector(ethereum_node_uri, contract_address, logger, abi_endpoint)
-        name, symbol, supply, decimals = self.contract.get_basic_information()    
+        name, symbol, supply, decimals = self.contract.get_basic_information()
         self.token = Token(name, symbol, supply, decimals)
 
     def start_mapping(self, starting_block, ending_block, minimum_block_height=0):
@@ -37,12 +38,16 @@ class Mapper:
 
 
     def _partition_blocks_and_gather_state(self, token, starting_block, ending_block, partition_size, retry_count=1):
+        events = []
         for start, end in generate_block_ranges(starting_block, ending_block, partition_size):
             try:
                 self.logger.info('Gather data of token %s from block %s to %s' % (token.name, start, end))
-                self.contract.get_state(start, end)
+                events.extend(self.contract.get_state(start, end))
             except ReadTimeout as exception:
                 self._try_to_retry_mapping(token, start, ending_block, partition_size, retry_count, exception)
+
+        with open('data.json', 'w') as fp:
+            print(json.dumps(events, indent=4), file=fp)
 
     def _try_to_retry_mapping(self, token, new_starting_block, ending_block, partition_size, retry_count, exception):
         if retry_count > self.max_number_of_retries:

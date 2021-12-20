@@ -7,7 +7,7 @@ def generate_block_ranges(starting_block, ending_block, range_size):
     while start + range_size <= end_block_number:
         end = start + range_size
         yield start, end
-        start = end + 1    
+        start = end + 1
     yield start, end_block_number
 
 
