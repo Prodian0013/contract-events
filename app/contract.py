@@ -1,7 +1,11 @@
-from web3 import Web3, HTTPProvider
-from web3.eth import Contract
-import requests
 import json
+from datetime import datetime
+
+import requests
+from web3 import HTTPProvider, Web3
+from web3.eth import Contract
+from web3.middleware import geth_poa_middleware
+from web3._utils.events import get_event_data
 
 
 class ContractConnector:
@@ -12,6 +16,7 @@ class ContractConnector:
         self.abi_endpoint = abi_endpoint
 
         self.web3 = Web3(HTTPProvider(ethereum_node_uri)) # type: Web3
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         self.address = self.web3.toChecksumAddress(contract_address)
         self.abi = self.fetch_abi()
         self.contract = self.web3.eth.contract(abi=self.abi, address=self.address) # type: Contract
@@ -40,7 +45,11 @@ class ContractConnector:
         transfers = transferEvents.get_all_entries()
         all_events = []
         for t in transfers:
-            all_events.append(json.loads(Web3.toJSON(t)))
+            event = json.loads(Web3.toJSON(t))
+            timestamp = self.web3.eth.get_block(t['blockNumber']).timestamp
+            dt_object = datetime.fromtimestamp(timestamp)
+            event['timestamp'] = str(dt_object)
+            all_events.append(event)
         self.logger.debug(
             'Found %i transfers of token from contract at address %s from block %s to %s'
             % (len(all_events), self.contract_address, start_from_block, end_at_block))

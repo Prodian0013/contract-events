@@ -1,15 +1,14 @@
+import json
+from typing import List
+
 from requests import ReadTimeout
 
 from .contract import ContractConnector
+from .event_analyzer import TransferEventAnalyzer
+from .models.token import Token
+from .models.transfer import Transfer
 from .utils import generate_block_ranges
-import json
 
-class Token(object):
-    def __init__(self, token_name, token_symbol, token_total_supply, token_decimals):
-        self.name = token_name
-        self.symbol = token_symbol
-        self.total_tokens_supply = token_total_supply
-        self.decimals = token_decimals
 
 class Mapper:
     def __init__(self, ethereum_node_uri, contract_address, partition_size, max_number_of_retries, logger, abi_endpoint):
@@ -17,7 +16,7 @@ class Mapper:
         self.max_number_of_retries = max_number_of_retries
         self.partition_size = partition_size
         self.watch_contract = False
-
+        self.event_analyzer = TransferEventAnalyzer()
         self.contract = ContractConnector(ethereum_node_uri, contract_address, logger, abi_endpoint)
         name, symbol, supply, decimals = self.contract.get_basic_information()
         self.token = Token(name, symbol, supply, decimals)
@@ -41,13 +40,17 @@ class Mapper:
         events = []
         for start, end in generate_block_ranges(starting_block, ending_block, partition_size):
             try:
+                if start > end:
+                    continue
                 self.logger.info('Gather data of token %s from block %s to %s' % (token.name, start, end))
                 events.extend(self.contract.get_state(start, end))
             except ReadTimeout as exception:
                 self._try_to_retry_mapping(token, start, ending_block, partition_size, retry_count, exception)
 
-        with open('data.json', 'w') as fp:
-            print(json.dumps(events, indent=4), file=fp)
+        transfers = self.event_analyzer.get_events(events) # type: List[Transfer]
+
+        with open('data.json', 'w') as fp:            
+            print(json.dumps([ob.__dict__ for ob in transfers]), file=fp)
 
     def _try_to_retry_mapping(self, token, new_starting_block, ending_block, partition_size, retry_count, exception):
         if retry_count > self.max_number_of_retries:

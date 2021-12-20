@@ -17,7 +17,7 @@ optional arguments:
   -h, --help      show this help message and exit
   --get-events    Pull contract event data from avax rpc
   --address       Contract Address
-  --start         Start block (default: 0x0)
+  --start         Start block (default: 7117331)
   --end           End block (default: latest)
   --process-data  Process event data from json (TODO)
 ```
