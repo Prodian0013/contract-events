@@ -1,10 +1,10 @@
+import logging
+import sys
+from logging import Logger
 from logging.handlers import RotatingFileHandler
 
-import sys
 
-import logging
-
-def init_logger(logger):
+def init_logger(logger: Logger):
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 

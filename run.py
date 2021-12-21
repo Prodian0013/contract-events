@@ -28,13 +28,16 @@ logger = logging.getLogger('main_logger') # type: Logger
 
 def map_token_state(contract_address, start_block, end_block):
     mapper = Mapper(
-        ethereum_node_uri=PARITY_NODE_URI,        
+        ethereum_node_uri=PARITY_NODE_URI,
         contract_address=contract_address,
         partition_size=MAX_BLOCKS_TO_MAP_AT_ONCE,
         max_number_of_retries=MAX_NUMBER_OF_RETRIES,
         logger=logger,
-        abi_endpoint=ABI_ENDPOINT)
-    mapper.start_mapping(starting_block=start_block, ending_block=end_block)
+        abi_endpoint=ABI_ENDPOINT,
+        start_block=start_block,
+        end_block=end_block)
+
+    mapper.start_mapping()
 
 if __name__ == '__main__':
     if not (args.get_events or args.process_data):

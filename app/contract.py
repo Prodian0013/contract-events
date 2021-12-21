@@ -1,4 +1,6 @@
 import json
+from logging import Logger
+from typing import Tuple
 
 import requests
 from web3 import HTTPProvider, Web3
@@ -7,7 +9,7 @@ from web3.middleware import geth_poa_middleware
 
 
 class ContractConnector:
-    def __init__(self, ethereum_node_uri, contract_address, logger, abi_endpoint):
+    def __init__(self, ethereum_node_uri: str, contract_address: str, logger: Logger, abi_endpoint: str):
 
         self.logger = logger
         self.event_name = 'Transfer'
@@ -21,13 +23,13 @@ class ContractConnector:
         self.contract = self.web3.eth.contract(abi=self.abi, address=self.address) # type: Contract
         self.block_timestamps = {}
 
-    def fetch_abi(self):
+    def fetch_abi(self) -> list:
         response = requests.get('%s%s'%(self.abi_endpoint, self.address))
         response_json = response.json()
-        abi = json.loads(response_json['result'])
+        abi = json.loads(response_json['result']) # type: list
         return abi
 
-    def get_basic_information(self):
+    def get_basic_information(self) -> Tuple:
         self.logger.debug('Getting basic token information from contract at address %s' % self.contract_address)
         token_name = self.contract.functions.name().call()
         total_supply = self.contract.functions.totalSupply().call()
