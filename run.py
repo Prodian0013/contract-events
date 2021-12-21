@@ -1,5 +1,6 @@
 import argparse
 import logging
+from logging import Logger
 
 from app.logger import init_logger
 from app.mapper import Mapper
@@ -22,12 +23,12 @@ parser.add_argument("--end", help="End block (default: latest)", dest='end_block
 parser.add_argument("--process-data", help="Convert data json into spreadsheet", dest='process_data', action='store_true')
 args, unknown = parser.parse_known_args()
 
-logger = logging.getLogger('main_logger')
+logger = logging.getLogger('main_logger') # type: Logger
 
 
 def map_token_state(contract_address, start_block, end_block):
     mapper = Mapper(
-        ethereum_node_uri=PARITY_NODE_URI,
+        ethereum_node_uri=PARITY_NODE_URI,        
         contract_address=contract_address,
         partition_size=MAX_BLOCKS_TO_MAP_AT_ONCE,
         max_number_of_retries=MAX_NUMBER_OF_RETRIES,
